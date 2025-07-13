@@ -1,6 +1,6 @@
 import torch
-# GPU 이름 체크(cuda:0에 연결된 그래픽 카드 기준)
-print(torch.cuda.get_device_name(device = 0)) # 'NVIDIA TITAN X (Pascal)'
+# Check GPU name (based on the graphics card connected to cuda:0)
+print(torch.cuda.get_device_name(device = 0)) # e.g., 'NVIDIA TITAN X (Pascal)'
 
-# 사용 가능 GPU 개수 체크
-print(torch.cuda.device_count()) # 3
+# Check the number of available GPUs
+print(torch.cuda.device_count()) # e.g., 3
