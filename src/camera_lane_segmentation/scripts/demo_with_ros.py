@@ -12,7 +12,7 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Float32, Bool
 
-# --- 유틸리티 함수 (필터링 등) ---
+# --- Utility Functions (Filtering, etc.) ---
 def polyfit_lane(points_y, points_x, order=2):
     if len(points_y) < 5: return None
     try: return np.polyfit(points_y, points_x, order)
@@ -58,7 +58,7 @@ def overlay_polyline(image, coeff, color=(0, 0, 255), step=4, thickness=2):
     if len(draw_points) > 1: cv2.polylines(image, [np.array(draw_points, dtype=np.int32)], False, color, thickness)
     return image
 
-# --- 메인 로직 클래스 ---
+# --- Main Logic Class ---
 class LaneFollowerNode:
     def __init__(self, opt):
         self.opt = opt
@@ -79,40 +79,40 @@ class LaneFollowerNode:
         
         self.m_per_pixel_y, self.y_offset_m, self.m_per_pixel_x = 0.0025, 1.25, 0.003578125 # for bev_params_y_5.npz
 
-        # --- 차선 추적 파라미터 ---
+        # --- Lane Tracking Parameters ---
         self.tracked_lanes = {'left': {'coeff': None, 'age': 0}, 'right': {'coeff': None, 'age': 0}}
         self.tracked_center_path = {'coeff': None}
         self.SMOOTHING_ALPHA = 0.6 
         self.MAX_LANE_AGE = 7 
 
-        # --- PURE PURSUIT 파라미터 ---
-        self.L = 0.73  # 차량 축거 (Wheelbase) [m]
+        # --- Pure Pursuit Parameters ---
+        self.L = 0.73  # Vehicle wheelbase [m]
         
-        # ======================= [핵심 수정: 동적 전방주시거리 파라미터] =======================
-        # throttle 입력 범위 0.3 ~ 0.5에 맞춰 파라미터를 설정합니다. (주행하며 튜닝 권장)
+        # ======================= [KEY MODIFICATION: Dynamic Lookahead Distance Parameters] =======================
+        # Set parameters for the throttle input range. Tuning while driving is recommended.
         self.THROTTLE_MIN = 0.4
         self.THROTTLE_MAX = 0.6
-        self.MIN_LOOKAHEAD_DISTANCE = 1.75 # 최소 전방주시거리 (throttle=0.3일 때) [m]
-        self.MAX_LOOKAHEAD_DISTANCE = 2.35 # 최대 전방주시거리 (throttle=0.5일 때) [m]
-        self.current_throttle = self.THROTTLE_MIN # 초기 throttle 값, 최소값으로 안전하게 시작
-        # ========================================================================================
+        self.MIN_LOOKAHEAD_DISTANCE = 1.75 # Minimum lookahead distance (at min throttle) [m]
+        self.MAX_LOOKAHEAD_DISTANCE = 2.35 # Maximum lookahead distance (at max throttle) [m]
+        self.current_throttle = self.THROTTLE_MIN # Initial throttle value, starting safely with the minimum value.
+        # =======================================================================================================
 
         self.pub_steering = rospy.Publisher('auto_steer_angle_lane', Float32, queue_size=1)
         self.pub_lane_status = rospy.Publisher('lane_detection_status', Bool, queue_size=1)
         self.image_sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.image_callback, queue_size=1, buff_size=2**24)
         
-        # ======================= [핵심: Throttle 토픽 구독자] =======================
+        # ======================= [KEY: Throttle Topic Subscriber] =======================
         self.throttle_sub = rospy.Subscriber('auto_throttle', Float32, self.throttle_callback, queue_size=1)
-        # ========================================================================================
+        # ================================================================================
 
         rospy.loginfo("[Lane Follower] Node initialized and waiting for images...")
 
-    # ======================= [핵심: Throttle 콜백 함수] =======================
+    # ======================= [KEY: Throttle Callback Function] =======================
     def throttle_callback(self, msg):
-        """ 'throttle' 토픽을 수신하여 self.current_throttle 값을 업데이트하는 콜백 함수 """
-        # 수신된 throttle 값의 범위를 THOTTLE_MIN ~ THROTTLE_MAX 사이로 제한합니다.
+        """ Callback function that receives the 'auto_throttle' topic and updates self.current_throttle. """
+        # Clips the received throttle value to be within the range of THROTTLE_MIN to THROTTLE_MAX.
         self.current_throttle = np.clip(msg.data, self.THROTTLE_MIN, self.THROTTLE_MAX)
-    # ====================================================================================
+    # ===================================================================================
 
     def do_bev_transform(self, image):
         M = cv2.getPerspectiveTransform(self.bev_params['src_points'], self.bev_params['dst_points'])
@@ -133,12 +133,12 @@ class LaneFollowerNode:
         self.process_image(cv_image)
 
     def process_image(self, im0s):
-        # 1. BEV 변환 및 추론
+        # 1. BEV Transform and Inference
         bev_image_input = self.do_bev_transform(im0s)
         results = self.model(bev_image_input, imgsz=self.opt.img_size, conf=self.opt.conf_thres, iou=self.opt.iou_thres, device=self.device, verbose=False)
         result = results[0]
         
-        # 2. 마스크 처리 및 필터링
+        # 2. Mask Processing and Filtering
         combined_mask_bev = np.zeros(result.orig_shape, dtype=np.uint8)
         if result.masks is not None:
             confidences = result.boxes.conf
@@ -151,7 +151,7 @@ class LaneFollowerNode:
         final_mask = final_filter(combined_mask_bev)
         bev_im_for_drawing = bev_image_input.copy()
 
-        # 3. 필터링된 마스크에서 차선 후보 추출
+        # 3. Extract Lane Candidates from the Filtered Mask
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(final_mask, connectivity=8)
         current_detections = []
         if num_labels > 1:
@@ -164,7 +164,7 @@ class LaneFollowerNode:
                         current_detections.append({'coeff': coeff, 'x_bottom': x_at_bottom})
             current_detections.sort(key=lambda c: c['x_bottom'])
 
-        # 4. 차선 추적 및 스무딩
+        # 4. Lane Tracking and Smoothing
         left_lane_tracked, right_lane_tracked = self.tracked_lanes['left'], self.tracked_lanes['right']
         current_left, current_right = None, None
         if len(current_detections) == 2: current_left, current_right = current_detections[0], current_detections[1]
@@ -194,11 +194,11 @@ class LaneFollowerNode:
         lane_detected_bool = (final_left_coeff is not None) or (final_right_coeff is not None)
         self.pub_lane_status.publish(Bool(data=lane_detected_bool))
         
-        # 5. Pure Pursuit 조향 제어
+        # 5. Pure Pursuit Steering Control
         steering_angle_deg = None
         goal_point_bev = None 
-        dynamic_lookahead_distance = self.MIN_LOOKAHEAD_DISTANCE # 기본값 설정
-        
+        dynamic_lookahead_distance = self.MIN_LOOKAHEAD_DISTANCE # Set a default value
+
         if lane_detected_bool:
             center_points = []
             LANE_WIDTH_M = 1.5
@@ -225,15 +225,15 @@ class LaneFollowerNode:
             if self.tracked_center_path['coeff'] is not None:
                 final_center_coeff = self.tracked_center_path['coeff']
 
-                # ======================= [핵심: 정규화 기반 동적 전방주시거리 계산] =======================
+                # ======================= [KEY: Dynamic Lookahead Distance Calculation based on Normalization] =======================
                 throttle_range = self.THROTTLE_MAX - self.THROTTLE_MIN
-                if throttle_range <= 0: # 분모가 0이 되는 오류 방지
+                if throttle_range <= 0: # Prevent division by zero error
                     normalized_throttle = 0.0
                 else:
                     normalized_throttle = (self.current_throttle - self.THROTTLE_MIN) / throttle_range
                 
                 dynamic_lookahead_distance = self.MIN_LOOKAHEAD_DISTANCE + (self.MAX_LOOKAHEAD_DISTANCE - self.MIN_LOOKAHEAD_DISTANCE) * normalized_throttle
-                # ========================================================================================
+                # ==================================================================================================================
                 
                 goal_point_vehicle = None
                 for y_bev in range(self.bev_h - 1, -1, -1):
@@ -253,7 +253,7 @@ class LaneFollowerNode:
                     steering_angle_deg = np.clip(steering_angle_deg, -25.0, 25.0)
                     self.pub_steering.publish(Float32(data=steering_angle_deg))
         
-        # 6. 시각화
+        # 6. Visualization
         annotated_frame = result.plot()
         
         overlay_polyline(bev_im_for_drawing, final_left_coeff, color=(255, 0, 0), step=2, thickness=2)
@@ -264,19 +264,18 @@ class LaneFollowerNode:
         if goal_point_bev is not None:
             cv2.circle(bev_im_for_drawing, goal_point_bev, 10, (0, 255, 255), -1) 
 
-        # 시각화 정보 갱신
+        # Update visualization information
         steer_text = f"Steer: {steering_angle_deg:.1f} deg" if steering_angle_deg is not None else "Steer: N/A"
         cv2.putText(bev_im_for_drawing, steer_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         cv2.putText(bev_im_for_drawing, f"Lane Detected: {lane_detected_bool}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         
-        # 차선 감지 여부와 상관없이 현재 throttle에 따른 lookahead 값을 항상 표시
+        # Always display the lookahead value based on the current throttle, regardless of lane detection status
         throttle_range = self.THROTTLE_MAX - self.THROTTLE_MIN
         if throttle_range <= 0: normalized_throttle = 0.0
         else: normalized_throttle = (self.current_throttle - self.THROTTLE_MIN) / throttle_range
         viz_lookahead = self.MIN_LOOKAHEAD_DISTANCE + (self.MAX_LOOKAHEAD_DISTANCE - self.MIN_LOOKAHEAD_DISTANCE) * normalized_throttle
         cv2.putText(bev_im_for_drawing, f"Lookahead: {viz_lookahead:.2f}m", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         cv2.putText(bev_im_for_drawing, f"Throttle: {self.current_throttle:.2f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-
 
         cv2.imshow("Original Camera View", im0s)
         cv2.imshow("Roboflow Detections (on BEV)", annotated_frame)

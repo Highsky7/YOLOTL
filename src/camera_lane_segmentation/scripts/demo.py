@@ -7,13 +7,13 @@ import torch
 import numpy as np
 from math import atan2, degrees, sqrt
 
-# Ultralytics 라이브러리 임포트
+# Import Ultralytics library
 from ultralytics import YOLO
 
-# 영상 로드를 위한 유틸리티 임포트
+# Import utilities for loading images/videos
 from utils.utils import LoadImages, LoadCamera
 
-# --- 유틸리티 함수 (기존과 동일) ---
+# --- Utility Functions (Same as original) ---
 def polyfit_lane(points_y, points_x, order=2):
     if len(points_y) < 5: return None
     try:
@@ -64,12 +64,12 @@ def overlay_polyline(image, coeff, color=(0, 0, 255), step=4, thickness=2):
         cv2.polylines(image, [np.array(draw_points, dtype=np.int32)], False, color, thickness)
     return image
 
-# --- 메인 로직 클래스 (ROS 기능 제거) ---
+# --- Main Logic Class (ROS features removed) ---
 class LaneFollowerLocal:
     def __init__(self, opt):
         self.opt = opt
 
-        # 디바이스 설정
+        # Set device
         device_str = self.opt.device.lower()
         if device_str.isdigit() and torch.cuda.is_available():
             self.device = torch.device(f'cuda:{device_str}')
@@ -77,34 +77,34 @@ class LaneFollowerLocal:
             self.device = torch.device('cpu')
         print(f"[INFO] Using device: {self.device}")
 
-        # YOLO 모델 로드
+        # Load YOLO model
         print(f"[INFO] Loading model from {self.opt.weights}...")
         self.model = YOLO(self.opt.weights)
         self.model.to(self.device)
         print("[INFO] Model loaded successfully.")
 
-        # BEV 파라미터 로드
+        # Load BEV parameters
         self.bev_params = np.load(self.opt.param_file)
         self.bev_h, self.bev_w = int(self.bev_params['warp_h']), int(self.bev_params['warp_w'])
         
-        # 좌표 변환 파라미터
+        # Coordinate transformation parameters
         self.m_per_pixel_y, self.y_offset_m, self.m_per_pixel_x = 0.0025, 1.25, 0.003578125
 
-        # 차선 추적 파라미터
+        # Lane tracking parameters
         self.tracked_lanes = {'left': {'coeff': None, 'age': 0}, 'right': {'coeff': None, 'age': 0}}
         self.tracked_center_path = {'coeff': None}
         self.SMOOTHING_ALPHA = 0.6
         self.MAX_LANE_AGE = 7
 
-        # PURE PURSUIT 파라미터
-        self.L = 0.73  # 차량 축거 (Wheelbase) [m]
+        # Pure Pursuit parameters
+        self.L = 0.73  # Vehicle wheelbase [m]
 
-        # 전방주시거리 파라미터 (Throttle 값은 고정됨)
+        # Lookahead distance parameters (Throttle value is fixed)
         self.THROTTLE_MIN = 0.4
         self.THROTTLE_MAX = 0.6
         self.MIN_LOOKAHEAD_DISTANCE = 1.75
         self.MAX_LOOKAHEAD_DISTANCE = 2.35
-        # ROS Subscriber가 없으므로 throttle 값은 초기값으로 고정됨
+        # Since there is no ROS Subscriber, the throttle value is fixed to its initial value.
         self.current_throttle = self.THROTTLE_MIN 
 
         print("[INFO] Local Processor initialized.")
@@ -121,14 +121,14 @@ class LaneFollowerLocal:
 
     def process_image(self, im0s):
         """
-        한 프레임의 이미지를 입력받아 차선 인식, 경로 생성, 조향각 계산 및 시각화를 수행
+        Processes a single image frame for lane recognition, path generation, steering angle calculation, and visualization.
         """
-        # 1. BEV 변환 및 추론
+        # 1. BEV Transform and Inference
         bev_image_input = self.do_bev_transform(im0s)
         results = self.model(bev_image_input, imgsz=self.opt.img_size, conf=self.opt.conf_thres, iou=self.opt.iou_thres, device=self.device, verbose=False)
         result = results[0]
         
-        # 2. 마스크 처리 및 필터링
+        # 2. Mask Processing and Filtering
         combined_mask_bev = np.zeros(result.orig_shape, dtype=np.uint8)
         if result.masks is not None:
             confidences = result.boxes.conf
@@ -140,7 +140,7 @@ class LaneFollowerLocal:
                     combined_mask_bev = np.maximum(combined_mask_bev, mask_np)
         final_mask = final_filter(combined_mask_bev)
         
-        # 3. 차선 후보 추출
+        # 3. Extract Lane Candidates
         num_labels, labels, stats, _ = cv2.connectedComponentsWithStats(final_mask, connectivity=8)
         current_detections = []
         if num_labels > 1:
@@ -153,7 +153,7 @@ class LaneFollowerLocal:
                         current_detections.append({'coeff': coeff, 'x_bottom': x_at_bottom})
             current_detections.sort(key=lambda c: c['x_bottom'])
 
-        # 4. 차선 추적 및 스무딩
+        # 4. Lane Tracking and Smoothing
         left_lane_tracked = self.tracked_lanes['left']
         right_lane_tracked = self.tracked_lanes['right']
         current_left, current_right = None, None
@@ -184,7 +184,7 @@ class LaneFollowerLocal:
         final_left_coeff, final_right_coeff = left_lane_tracked['coeff'], right_lane_tracked['coeff']
         lane_detected_bool = (final_left_coeff is not None) or (final_right_coeff is not None)
         
-        # 5. Pure Pursuit 조향 제어
+        # 5. Pure Pursuit Steering Control
         steering_angle_deg, goal_point_bev = None, None
         
         if lane_detected_bool:
@@ -213,7 +213,7 @@ class LaneFollowerLocal:
             if self.tracked_center_path['coeff'] is not None:
                 final_center_coeff = self.tracked_center_path['coeff']
 
-                # 전방주시거리 계산 (고정된 throttle 값 사용)
+                # Calculate lookahead distance (using a fixed throttle value)
                 throttle_range = self.THROTTLE_MAX - self.THROTTLE_MIN
                 normalized_throttle = (self.current_throttle - self.THROTTLE_MIN) / throttle_range if throttle_range > 0 else 0.0
                 dynamic_lookahead_distance = self.MIN_LOOKAHEAD_DISTANCE + (self.MAX_LOOKAHEAD_DISTANCE - self.MIN_LOOKAHEAD_DISTANCE) * normalized_throttle
@@ -235,7 +235,7 @@ class LaneFollowerLocal:
                     steering_angle_deg = -np.degrees(steering_angle_rad)
                     steering_angle_deg = np.clip(steering_angle_deg, -25.0, 25.0)
         
-        # 6. 시각화
+        # 6. Visualization
         bev_im_for_drawing = self.do_bev_transform(im0s)
         annotated_frame = result.plot()
         
@@ -247,7 +247,7 @@ class LaneFollowerLocal:
         if goal_point_bev is not None:
             cv2.circle(bev_im_for_drawing, goal_point_bev, 10, (0, 255, 255), -1) 
 
-        # 시각화 정보(로그) 갱신
+        # Update visualization information (logs)
         steer_text = f"Steer: {steering_angle_deg:.1f} deg" if steering_angle_deg is not None else "Steer: N/A"
         cv2.putText(bev_im_for_drawing, steer_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
         cv2.putText(bev_im_for_drawing, f"Lane Detected: {lane_detected_bool}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
@@ -258,7 +258,7 @@ class LaneFollowerLocal:
         cv2.putText(bev_im_for_drawing, f"Lookahead: {viz_lookahead:.2f}m", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
         cv2.putText(bev_im_for_drawing, f"Throttle (Fixed): {self.current_throttle:.2f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
 
-        # 결과 창 표시
+        # Display result windows
         cv2.imshow("Original Camera View", im0s)
         cv2.imshow("Roboflow Detections (on BEV)", annotated_frame)
         cv2.imshow("Final Path & Logs (on BEV)", bev_im_for_drawing)

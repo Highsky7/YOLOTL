@@ -18,10 +18,10 @@ from sensor_msgs.msg import Image
 from cv_bridge import CvBridge, CvBridgeError
 from std_msgs.msg import Float32
 from std_msgs.msg import Bool
-# utils.py의 LoadImages는 파일 처리를 위해 그대로 사용합니다.
+# LoadImages from utils.py is used as-is for file processing.
 from utils.utils import time_synchronized, increment_path, AverageMeter, LoadImages
 
-# argparse 설정 (변경 없음)
+# Argparse settings (Unchanged)
 def make_parser():
     parser = argparse.ArgumentParser(description="Roboflow Instance Segmentation with BEV on Mask")
     parser.add_argument('--weights', type=str, default='./weights.pt', help='path to your BEV-trained model.pt file')
@@ -32,14 +32,14 @@ def make_parser():
     parser.add_argument('--iou-thres', type=float, default=0.5, help='IOU threshold for NMS')
     parser.add_argument('--project', default='runs/detect_roboflow_bev', help='save results to project/name')
     parser.add_argument('--name', default='exp', help='save results to project/name')
-    parser.add_argument('--nosave', action='store_false', help='저장하지 않으려면 사용')
+    parser.add_argument('--nosave', action='store_false', help='Use to disable saving')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--frame-skip', type=int, default=0, help='frame skipping (0 to disable)')
     parser.add_argument('--param-file', type=str, default='./bev_params_3.npz', help='BEV parameter file (.npz)')
     parser.add_argument('--debug', action='store_true', help='Visualize lane in vehicle coordinates using Matplotlib')
     return parser
 
-# 유틸리티 함수들 (변경 없음)
+# Utility functions (Unchanged)
 def polyfit_lane(points_y, points_x, order=2):
     if len(points_y) < 5: return None
     try: return np.polyfit(points_y, points_x, order)
@@ -91,7 +91,7 @@ def final_filter(bev_mask):
 def do_bev_transform(image, bev_param_file):
     params = np.load(bev_param_file)
     src_points, dst_points = params['src_points'], params['dst_points']
-    warp_w, warp_h = int(params['warp_w']), int(params['warp_h'])
+    warp_w, warp_h = int(params['warp_w']), int(params['warp_w'])
     M = cv2.getPerspectiveTransform(src_points, dst_points)
     return cv2.warpPerspective(image, M, (warp_w, warp_h), flags=cv2.INTER_LINEAR)
 
@@ -137,32 +137,32 @@ def detect_and_publish(opt, pub_mask, pub_steering, pub_lane_status):
         y_vehicle = (bev_w_expected / 2 - u) * m_per_pixel_x
         return x_vehicle, y_vehicle
 
-    # --- 핵심 로직 변경: process_frame 함수 ---
+    # --- Key Logic Change: process_frame function ---
     def process_frame(im0s):
-        # 1. 원본 프레임(im0s)에서 객체 탐지 (Detect-first)
+        # 1. Detect objects in the original frame (im0s) (Detect-first approach)
         results = model(im0s, imgsz=opt.img_size, conf=opt.conf_thres, iou=opt.iou_thres, device=device, verbose=False)
         result = results[0]
         
-        # 2. 탐지된 결과에서 마스크 추출 및 하나로 합치기
+        # 2. Extract masks from detection results and combine them into one
         combined_mask = np.zeros(result.orig_shape, dtype=np.uint8)
         if result.masks is not None:
             for mask_tensor in result.masks.data:
-                # 마스크를 원본 이미지 크기로 리사이즈
+                # Resize the mask to the original image size
                 mask_np = (mask_tensor.cpu().numpy() * 255).astype(np.uint8)
                 resized_mask = cv2.resize(mask_np, (result.orig_shape[1], result.orig_shape[0]))
                 combined_mask = np.maximum(combined_mask, resized_mask)
 
-        # 3. 합쳐진 마스크를 BEV로 변환
+        # 3. Transform the combined mask to BEV
         bev_mask_orig = do_bev_transform(combined_mask, bev_param_file)
         
-        # 4. BEV 마스크 후처리 및 골격선 추출
+        # 4. Post-process the BEV mask and extract the skeleton line
         bevfilter_mask = final_filter(bev_mask_orig)
         final_mask = ximgproc.thinning(bevfilter_mask, thinningType=ximgproc.THINNING_GUOHALL)
         if final_mask is None or np.sum(final_mask) == 0:
-            final_mask = bevfilter_mask # thinning 실패 시 필터링된 마스크 사용
+            final_mask = bevfilter_mask # Use the filtered mask if thinning fails
 
-        # 5. 경로 생성 및 조향각 계산 (기존 로직과 거의 동일)
-        # 경로를 시각화하기 위해 원본 이미지를 BEV로 변환한 배경 이미지를 생성
+        # 5. Path generation and steering angle calculation (Mostly same as original logic)
+        # Create a background image by transforming the original image to BEV for path visualization
         bev_im_for_drawing = do_bev_transform(im0s, bev_param_file)
         h_bev, w_bev = bev_im_for_drawing.shape[:2]
         
@@ -185,7 +185,7 @@ def detect_and_publish(opt, pub_mask, pub_steering, pub_lane_status):
         pub_lane_status.publish(Bool(data=lane_detected_bool))
         
         if lane_detected_bool:
-            # 이 아래의 조향각 계산 로직은 기존 코드와 동일하게 유지됩니다.
+            # The steering angle calculation logic below remains the same as the original code.
             main_lane_poly_points = []
             path_start_point_bev = (w_bev // 2, h_bev - 1)
             active_coeff_for_steering = None
@@ -233,15 +233,14 @@ def detect_and_publish(opt, pub_mask, pub_steering, pub_lane_status):
                     if 0 <= goal_u_img < w_bev and 0 <= goal_v_img < h_bev:
                         cv2.circle(bev_im_for_drawing, (goal_u_img, goal_v_img), 8, (0, 255, 0), -1)
         
-        # 6. 시각화
-        annotated_frame = result.plot() # 원본 영상에 탐지 결과 표시
+        # 6. Visualization
+        annotated_frame = result.plot() # Display detection results on the original image
         cv2.imshow("Original with Detections", annotated_frame)
         cv2.imshow("Front View Mask", combined_mask)
         cv2.imshow("Final BEV Mask", final_mask)
         cv2.imshow("Final Path (on BEV)", bev_im_for_drawing)
 
-
-    # --- 메인 루프: 기존의 안정적인 VideoCapture 방식 유지 ---
+    # --- Main Loop: Maintaining the stable, existing VideoCapture method ---
     cap = None
     if source.isdigit():
         is_webcam = True
@@ -292,7 +291,7 @@ def ros_main():
     pub_steering = rospy.Publisher('auto_steer_angle_lane', Float32, queue_size=1)
     pub_lane_status = rospy.Publisher('lane_detection_status', Bool, queue_size=1)
     
-    # 노드 시작 메시지 변경
+    # Changed node start message
     rospy.loginfo("Roboflow BEV Follower Node Started with Detect-first logic")
     rospy.loginfo(f"OPTIONS: {opt}")
 

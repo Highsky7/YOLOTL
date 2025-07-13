@@ -9,7 +9,7 @@ import sys
 import time
 
 # =================================================================
-# (주의: 이 스크립트가 작동하려면 utils.utils 모듈에 LoadCamera 클래스가 정의되어 있어야 합니다.)
+# (Note: This script requires the LoadCamera class to be defined in the utils.utils module.)
 # =================================================================
 from utils.utils import LoadCamera
 # =================================================================
@@ -17,11 +17,11 @@ from utils.utils import LoadCamera
 
 def do_bev_transform(image, bev_param_file):
     """
-    입력된 이미지에 대해 BEV(Bird's-Eye-View) 변환을 수행합니다.
-    (이 함수는 원본 코드와 동일하며 변경되지 않았습니다.)
+    Performs Bird's-Eye-View (BEV) transformation on the input image.
+    (This function is identical to the original and has not been modified.)
     """
     if not Path(bev_param_file).exists():
-        print(f"[오류] BEV 파라미터 파일을 찾을 수 없습니다: {bev_param_file}")
+        print(f"[ERROR] BEV parameter file not found: {bev_param_file}")
         sys.exit(1)
 
     params = np.load(bev_param_file)
@@ -37,51 +37,51 @@ def do_bev_transform(image, bev_param_file):
 
 def make_parser():
     """
-    스크립트 실행을 위한 인자(argument)를 파싱하는 함수입니다.
+    Parses arguments for script execution.
     """
-    parser = argparse.ArgumentParser(description="실시간 카메라 영상을 원본과 BEV(Bird's-Eye-View)로 변환하여 각각 H.264 코덱으로 녹화하는 스크립트")
+    parser = argparse.ArgumentParser(description="A script that records real-time camera video as both original and BEV (Bird's-Eye-View) transformations, each with H.264 codec.")
     parser.add_argument('--source', type=str,
                         default='2',
-                        help='카메라 인덱스. 일반적으로 내장 카메라는 "0", 외부 카메라는 "1" 등. 예: 0')
-    parser.add_argument('--img-size', type=int, default=640, help='처리할 이미지 해상도 (LoadCamera 클래스에 전달)')
-    parser.add_argument('--param-file', type=str, default='/home/highsky/dol_dol_dol_ws/bev_params_y_5.npz', help='BEV 파라미터 파일 경로. 예: ./bev_params_1.npz')
-    parser.add_argument('--output-dir', type=str, default='runs/bev_output', help='결과 영상이 저장될 폴더')
+                        help='Camera index. Typically "0" for built-in, "1" for external, etc. E.g., 0')
+    parser.add_argument('--img-size', type=int, default=640, help='Image resolution to process (passed to LoadCamera class)')
+    parser.add_argument('--param-file', type=str, default='/home/highsky/dol_dol_dol_ws/bev_params_y_5.npz', help='Path to the BEV parameter file. E.g., ./bev_params_1.npz')
+    parser.add_argument('--output-dir', type=str, default='runs/bev_output', help='Folder where the resulting videos will be saved')
     return parser
 
 def bev_transform_and_save_realtime(opt):
     """
-    메인 로직: LoadCamera를 사용하여 실시간 영상을 읽고, 원본과 BEV 변환 프레임을 각각 H.264 코덱으로 녹화합니다.
-    'q' 키를 누르면 녹화가 중단되고 프로그램이 종료됩니다.
+    Main logic: Reads real-time video using LoadCamera, and records both original and BEV transformed frames
+    separately with H.264 codec. Press 'q' to stop recording and exit the program.
     """
     try:
         dataset = LoadCamera(opt.source, img_size=opt.img_size)
     except Exception as e:
-        print(f"[오류] 카메라를 열 수 없습니다: {opt.source}")
-        print(f"  - 세부 정보: {e}")
+        print(f"[ERROR] Could not open camera: {opt.source}")
+        print(f"  - Details: {e}")
         return
 
-    ### 변경된 부분: 2개의 비디오 녹화를 위해 Writer 객체를 2개 선언합니다. ###
+    # MODIFIED: Declare two writer objects for two video recordings.
     writer_original = None
     writer_bev = None
     
-    # 저장 경로 설정
+    # Set save paths
     output_dir = Path(opt.output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
     timestamp = time.strftime("%Y%m%d_%H%M%S")
     
-    ### 변경된 부분: 원본 영상과 BEV 영상의 저장 경로를 각각 생성합니다. ###
+    # MODIFIED: Create separate save paths for the original and BEV videos.
     output_path_original = output_dir / f"original_output_{timestamp}_h264.mp4"
     output_path_bev = output_dir / f"bev_output_{timestamp}_h264.mp4"
     
     print("=====================================================")
-    ### 변경된 부분: 안내 메시지를 수정하여 2개의 파일이 저장됨을 알립니다. ###
-    print(f"  실시간 원본 및 BEV 변환 영상 H.264 동시 녹화를 시작합니다")
-    print(f"  - 입력 카메라: {opt.source}")
-    print(f"  - 처리 해상도: {opt.img_size} (LoadCamera 사용)")
-    print(f"  - BEV 파라미터: {opt.param_file}")
-    print(f"  - 원본 영상 저장 경로: {output_path_original}")
-    print(f"  - BEV 영상 저장 경로: {output_path_bev}")
-    print("\n  결과 창에서 'q' 키를 누르면 녹화가 중단되고 종료됩니다.")
+    # MODIFIED: Update the info message to indicate that two files will be saved.
+    print(f"  Starting simultaneous H.264 recording of real-time original and BEV transformed video")
+    print(f"  - Input Camera: {opt.source}")
+    print(f"  - Processing Resolution: {opt.img_size} (using LoadCamera)")
+    print(f"  - BEV Parameters: {opt.param_file}")
+    print(f"  - Original Video Save Path: {output_path_original}")
+    print(f"  - BEV Video Save Path: {output_path_bev}")
+    print("\n  Press 'q' in the result window to stop recording and exit.")
     print("=====================================================")
 
     params = np.load(opt.param_file)
@@ -90,40 +90,40 @@ def bev_transform_and_save_realtime(opt):
 
     for frame_idx, (path, img, im0s, vid_cap) in enumerate(dataset):
         
-        # 첫 프레임에서 VideoWriter 초기화
-        ### 변경된 부분: 두 Writer가 모두 초기화되지 않았을 때 실행합니다. ###
+        # Initialize VideoWriters on the first frame
+        # MODIFIED: Execute when both writers have not been initialized.
         if writer_original is None and writer_bev is None:
             fps = vid_cap.get(cv2.CAP_PROP_FPS)
             if fps == 0:
-                print("[경고] 카메라에서 FPS를 얻을 수 없어 30으로 설정합니다.")
+                print("[WARNING] Could not get FPS from camera. Setting to 30.")
                 fps = 30
             
-            fourcc = cv2.VideoWriter_fourcc(*'H264')  # H.264 코덱 사용
-            
-            ### 추가된 부분: 원본 영상의 가로, 세로 크기를 가져옵니다. ###
+            fourcc = cv2.VideoWriter_fourcc(*'H264')  # Use H.264 codec
+
+            # ADDED: Get the width and height of the original video.
             h, w, _ = im0s.shape
             
-            ### 추가된 부분: 원본 영상용 VideoWriter를 초기화합니다. ###
+            # ADDED: Initialize VideoWriter for the original video.
             writer_original = cv2.VideoWriter(str(output_path_original), fourcc, fps, (w, h))
             
-            ### 변경된 부분: BEV 영상용 VideoWriter를 초기화합니다. ###
+            # MODIFIED: Initialize VideoWriter for the BEV video.
             writer_bev = cv2.VideoWriter(str(output_path_bev), fourcc, fps, (output_w, output_h))
 
-            ### 변경된 부분: 두 Writer가 모두 성공적으로 열렸는지 확인합니다. ###
+            # MODIFIED: Check if both writers opened successfully.
             if not writer_original.isOpened() or not writer_bev.isOpened():
-                print("\n[오류] H.264 코덱으로 비디오 파일을 생성할 수 없습니다.")
-                print("  - 시스템에 H.264 코덱이 설치되어 있는지 확인해주세요.")
-                print("  - 또는 다른 FourCC 코드(예: 'avc1', 'X264', 'mp4v')를 시도해보세요.")
-                break # 루프 중단
+                print("\n[ERROR] Could not create video file with H.264 codec.")
+                print("  - Please check if the H.264 codec is installed on your system.")
+                print("  - Alternatively, try other FourCC codes (e.g., 'avc1', 'X264', 'mp4v').")
+                break # Stop the loop
 
         input_frame = im0s
         bev_frame = do_bev_transform(input_frame, opt.param_file)
 
-        ### 추가된 부분: 원본 프레임을 녹화합니다. ###
+        # ADDED: Record the original frame.
         if writer_original is not None and writer_original.isOpened():
             writer_original.write(input_frame)
             
-        ### 변경된 부분: BEV 프레임을 녹화합니다. ###
+        # MODIFIED: Record the BEV frame.
         if writer_bev is not None and writer_bev.isOpened():
             writer_bev.write(bev_frame)
 
@@ -131,25 +131,25 @@ def bev_transform_and_save_realtime(opt):
         cv2.imshow('BEV Transformed Video (Recording...)', bev_frame)
         
         if cv2.waitKey(1) & 0xFF == ord('q'):
-            print("\n'q' 키가 입력되어 녹화를 중단합니다.")
+            print("\n'q' was pressed. Stopping recording.")
             break
     
-    # 자원 해제
+    # Release resources
     if isinstance(dataset, LoadCamera) and dataset.cap:
         dataset.cap.release()
         
-    ### 추가된 부분: 원본 영상 Writer를 해제합니다. ###
+    # ADDED: Release the original video writer.
     if writer_original is not None and writer_original.isOpened():
         writer_original.release()
         
-    ### 변경된 부분: BEV 영상 Writer를 해제합니다. ###
+    # MODIFIED: Release the BEV video writer.
     if writer_bev is not None and writer_bev.isOpened():
         writer_bev.release()
 
-    ### 변경된 부분: 완료 메시지를 수정합니다. ###
-    print("\n[완료] 원본 및 BEV 영상 녹화가 완료되었습니다.")
-    print(f"결과물은 아래 경로에서 확인하실 수 있습니다:")
-    print(f"  - 원본: '{output_path_original}'")
+    # MODIFIED: Update the completion message.
+    print("\n[COMPLETE] Recording of original and BEV videos is complete.")
+    print(f"You can find the results at the following paths:")
+    print(f"  - Original: '{output_path_original}'")
     print(f"  - BEV: '{output_path_bev}'")
 
     cv2.destroyAllWindows()
