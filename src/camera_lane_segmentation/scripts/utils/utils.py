@@ -326,13 +326,13 @@ class LoadCamera:
             # self.cap = cv2.VideoCapture(self.source)
 
         if not self.cap.isOpened():
-            raise Exception(f"카메라를 열 수 없습니다. ID/Dev: {self.source}")
+            raise Exception(f"Could not open camera. ID/Dev: {self.source}")
 
         self.cap.set(cv2.CAP_PROP_FOURCC, cv2.VideoWriter_fourcc(*'MJPG'))
         self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, 1280)
         self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, 720)
         self.cap.set(cv2.CAP_PROP_FPS, 30)
-        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)  # AUTOFOCUS 끄기
+        self.cap.set(cv2.CAP_PROP_AUTOFOCUS, 1)  # Turn off AUTOFOCUS
 
         self.width = int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH))
         self.height = int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
@@ -351,7 +351,7 @@ class LoadCamera:
             raise StopIteration
         self.frame += 1
 
-        # YOLO 입력용 letterbox
+        # Letterbox for YOLO input
         img = letterbox(img0, (self.img_size, self.img_size), stride=self.stride)[0]
         img = img[:, :, ::-1].transpose(2, 0, 1)
         img = np.ascontiguousarray(img)
@@ -386,7 +386,7 @@ class LoadImages:
         self.nf = ni + nv
         self.video_flag = [False] * ni + [True] * nv
         self.mode = 'image'
-        self.count = 0  # <-- 객체 생성 시 카운터를 0으로 초기화
+        self.count = 0  # <-- Initialize counter to 0 upon object creation
         self.cap = None
 
         if any(videos):
@@ -397,7 +397,7 @@ class LoadImages:
         assert self.nf > 0, f'No images or videos found in {p}. '
 
     def __iter__(self):
-        self.count = 0  # <-- 매번 순회(iter) 시작 시 0으로 초기화
+        self.count = 0  # <-- Reset to 0 at the start of each iteration
         return self
 
     def __next__(self):
@@ -425,10 +425,10 @@ class LoadImages:
             assert img0 is not None, 'Image Not Found ' + path
             self.count += 1
 
-        # 1280x720로 강제 리사이즈
+        # Force resize to 1280x720
         img0 = cv2.resize(img0, (1280, 720))
 
-        # YOLO 입력용 letterbox
+        # Letterbox for YOLO input
         img = letterbox(img0, (self.img_size, self.img_size), stride=self.stride)[0]
         img = img[:, :, ::-1].transpose(2, 0, 1)
         img = np.ascontiguousarray(img)
@@ -484,34 +484,34 @@ def driving_area_mask(seg=None):
 
 def lane_line_mask(ll=None, threshold=0.5, method='otsu'):
     """
-    차선 세그멘테이션 결과로부터 이진 마스크를 생성합니다.
+    Creates a binary mask from the lane segmentation result.
     
     Parameters:
         ll: torch.Tensor
-            네트워크의 차선 세그멘테이션 출력 (배치, 채널, 높이, 너비)
+            The lane segmentation output from the network (batch, channel, height, width).
         threshold: float
-            고정 임계값 방식 사용 시 적용할 임계값 (0~1 사이)
-        method: str, 선택 사항
-            'fixed'   : 고정 임계값 방식 (기본값)
-            'otsu'    : Otsu thresholding 방식
+            The threshold to apply when using the 'fixed' thresholding method (between 0 and 1).
+        method: str, optional
+            'fixed'   : Use a fixed threshold (default).
+            'otsu'    : Use Otsu's thresholding method.
              
     Returns:
         binary_mask: numpy.ndarray
-            0과 255로 구성된 이진 마스크
+            A binary mask consisting of 0s and 255s.
     """
-    # (1) 관심 영역(crop) 선택 및 해상도 보정
-    ll_predict = ll[:, :, 12:372, :]  # 원래 코드와 동일
+    # (1) Select region of interest (crop) and correct resolution
+    ll_predict = ll[:, :, 12:372, :]  # Same as the original code
     ll_seg_map = F.interpolate(ll_predict, scale_factor=2, mode='bilinear')
     ll_seg_map = ll_seg_map.squeeze(1)  # shape: (B, H, W)
     
-    # 배치 사이즈가 1이라고 가정하고 첫 번째 결과 사용
+    # Assume batch size is 1 and use the first result
     ll_seg_map = ll_seg_map[0]  # shape: (H, W)
-    # tensor → numpy (GPU tensor인 경우 .cpu() 필요)
+    # tensor → numpy (requires .cpu() if it's a GPU tensor)
     ll_seg_map = ll_seg_map.cpu().numpy()
     
-    # guided filter 적용: 먼저 0~255 범위의 8비트 이미지로 변환
+    # Apply guided filter: first convert to an 8-bit image in the 0-255 range
     ll_seg_map_8u = (ll_seg_map * 255).astype(np.uint8)
-    # guided filter 파라미터: radius와 eps는 데이터에 따라 튜닝 필요
+    # Guided filter parameters: radius and eps may need tuning depending on the data
     guided = cv2.ximgproc.guidedFilter(guide=ll_seg_map_8u, src=ll_seg_map_8u, radius=4, eps=1e-1)
     
     if method == 'fixed':
@@ -526,22 +526,22 @@ def lane_line_mask(ll=None, threshold=0.5, method='otsu'):
 
 def apply_clahe(image):
     """
-    CLAHE를 사용하여 이미지의 대비를 향상시킵니다.
+    Enhances the contrast of an image using CLAHE.
     
     Parameters:
-        image (numpy.ndarray): 입력 이미지. 컬러(BGR) 또는 그레이스케일.
+        image (numpy.ndarray): Input image. Can be color (BGR) or grayscale.
         
     Returns:
-        enhanced_image (numpy.ndarray): 대비가 향상된 이미지.
+        enhanced_image (numpy.ndarray): The contrast-enhanced image.
     """
     if len(image.shape) == 3 and image.shape[2] == 3:
-        # 컬러 이미지인 경우 YUV 색 공간으로 변환 후 Y 채널에 CLAHE 적용
+        # For color images, convert to YUV color space and apply CLAHE to the Y channel
         yuv = cv2.cvtColor(image, cv2.COLOR_BGR2YUV)
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         yuv[:, :, 0] = clahe.apply(yuv[:, :, 0])
         enhanced_image = cv2.cvtColor(yuv, cv2.COLOR_YUV2BGR)
     else:
-        # 그레이스케일 이미지인 경우 직접 CLAHE 적용
+        # For grayscale images, apply CLAHE directly
         clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
         enhanced_image = clahe.apply(image)
     return enhanced_image
