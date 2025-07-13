@@ -1,2 +1,2 @@
 # YOLOTL
-Open source project work with pre trained model for topview lane segmentation and algorithm to get steering angel by processing lane mask from the model
+Using pre trained model from roboflow using custom topview lane dataset to segment topview lane mask and algorithm to get steering angle by processing lane mask from the model
