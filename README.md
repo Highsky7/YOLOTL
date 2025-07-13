@@ -2,8 +2,8 @@
 
 YOLOTL is a ROS-based project for real-time lane detection and steering angle calculation using a pre-trained YOLO model for top-view lane segmentation. It provides a robust solution for developing autonomous driving capabilities, with a focus on accuracy and performance.
 
-![example](example.mp4)
-![example2](example2.mp4)
+![YOLOTL_1](./YOLOTL_1.gif)
+![YOLOTL_2](./YOLOTL_2.gif)
 
 ## Features
 
