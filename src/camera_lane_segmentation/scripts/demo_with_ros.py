@@ -44,7 +44,7 @@ def keep_top2_components(binary_mask, min_area=300):
 
 def final_filter(bev_mask):
     f2 = morph_close(bev_mask, ksize=5)
-    f3 = remove_small_components(f2, min_size=10000) # Need to be tuned for noise in real environment
+    f3 = remove_small_components(f2, min_size=10000) # Needs tuning for noise in the real environment
     f4 = keep_top2_components(f3, min_area=300)
     return f4
 
@@ -89,7 +89,6 @@ class LaneFollowerNode:
         self.L = 0.73  # Vehicle wheelbase [m]
         
         # ======================= [KEY MODIFICATION: Dynamic Lookahead Distance Parameters] =======================
-        # Set parameters for the throttle input range. Tuning while driving is recommended.
         self.THROTTLE_MIN = 0.4
         self.THROTTLE_MAX = 0.6
         self.MIN_LOOKAHEAD_DISTANCE = 1.75 # Minimum lookahead distance (at min throttle) [m]
@@ -110,7 +109,6 @@ class LaneFollowerNode:
     # ======================= [KEY: Throttle Callback Function] =======================
     def throttle_callback(self, msg):
         """ Callback function that receives the 'auto_throttle' topic and updates self.current_throttle. """
-        # Clips the received throttle value to be within the range of THROTTLE_MIN to THROTTLE_MAX.
         self.current_throttle = np.clip(msg.data, self.THROTTLE_MIN, self.THROTTLE_MAX)
     # ===================================================================================
 
@@ -197,7 +195,7 @@ class LaneFollowerNode:
         # 5. Pure Pursuit Steering Control
         steering_angle_deg = None
         goal_point_bev = None 
-        dynamic_lookahead_distance = self.MIN_LOOKAHEAD_DISTANCE # Set a default value
+        dynamic_lookahead_distance = self.MIN_LOOKAHEAD_DISTANCE
 
         if lane_detected_bool:
             center_points = []
@@ -227,7 +225,7 @@ class LaneFollowerNode:
 
                 # ======================= [KEY: Dynamic Lookahead Distance Calculation based on Normalization] =======================
                 throttle_range = self.THROTTLE_MAX - self.THROTTLE_MIN
-                if throttle_range <= 0: # Prevent division by zero error
+                if throttle_range <= 0:
                     normalized_throttle = 0.0
                 else:
                     normalized_throttle = (self.current_throttle - self.THROTTLE_MIN) / throttle_range
@@ -264,12 +262,10 @@ class LaneFollowerNode:
         if goal_point_bev is not None:
             cv2.circle(bev_im_for_drawing, goal_point_bev, 10, (0, 255, 255), -1) 
 
-        # Update visualization information
         steer_text = f"Steer: {steering_angle_deg:.1f} deg" if steering_angle_deg is not None else "Steer: N/A"
         cv2.putText(bev_im_for_drawing, steer_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         cv2.putText(bev_im_for_drawing, f"Lane Detected: {lane_detected_bool}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
         
-        # Always display the lookahead value based on the current throttle, regardless of lane detection status
         throttle_range = self.THROTTLE_MAX - self.THROTTLE_MIN
         if throttle_range <= 0: normalized_throttle = 0.0
         else: normalized_throttle = (self.current_throttle - self.THROTTLE_MIN) / throttle_range
@@ -279,6 +275,12 @@ class LaneFollowerNode:
 
         cv2.imshow("Original Camera View", im0s)
         cv2.imshow("Roboflow Detections (on BEV)", annotated_frame)
+        
+        # ======================= [ ✨ ADDED PART ✨ ] =======================
+        # Display the final filtered lane mask in a new window titled "Filtered Lane Mask (BEV)".
+        cv2.imshow("Filtered Lane Mask (BEV)", final_mask)
+        # =================================================================
+
         cv2.imshow("Final Path (on BEV)", bev_im_for_drawing)
         cv2.waitKey(1)
 
