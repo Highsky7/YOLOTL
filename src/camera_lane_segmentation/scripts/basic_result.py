@@ -24,7 +24,7 @@ from utils.utils import time_synchronized, increment_path, AverageMeter, LoadIma
 # Argparse settings (Unchanged)
 def make_parser():
     parser = argparse.ArgumentParser(description="Roboflow Instance Segmentation with BEV on Mask")
-    parser.add_argument('--weights', type=str, default='./weights.pt', help='path to your BEV-trained model.pt file')
+    parser.add_argument('--weights', type=str, default='./weights2.pt', help='path to your BEV-trained model.pt file')
     parser.add_argument('--source', type=str, default='0', help='source: 0(webcam) or video/image file path')
     parser.add_argument('--img-size', type=int, default=640, help='inference resolution for the model')
     parser.add_argument('--device', default='0', help='cuda device: 0 or cpu')
@@ -35,7 +35,7 @@ def make_parser():
     parser.add_argument('--nosave', action='store_false', help='Use to disable saving')
     parser.add_argument('--exist-ok', action='store_true', help='existing project/name ok, do not increment')
     parser.add_argument('--frame-skip', type=int, default=0, help='frame skipping (0 to disable)')
-    parser.add_argument('--param-file', type=str, default='./bev_params_3.npz', help='BEV parameter file (.npz)')
+    parser.add_argument('--param-file', type=str, default='./bev_params_y_5.npz', help='BEV parameter file (.npz)')
     parser.add_argument('--debug', action='store_true', help='Visualize lane in vehicle coordinates using Matplotlib')
     return parser
 
