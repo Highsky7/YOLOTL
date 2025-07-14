@@ -88,29 +88,26 @@ class LaneFollowerNode:
         # --- Pure Pursuit Parameters ---
         self.L = 0.73  # Vehicle wheelbase [m]
         
-        # ======================= [KEY MODIFICATION: Dynamic Lookahead Distance Parameters] =======================
+        # --- Dynamic Lookahead Distance Parameters ---
         self.THROTTLE_MIN = 0.4
         self.THROTTLE_MAX = 0.6
         self.MIN_LOOKAHEAD_DISTANCE = 1.75 # Minimum lookahead distance (at min throttle) [m]
         self.MAX_LOOKAHEAD_DISTANCE = 2.35 # Maximum lookahead distance (at max throttle) [m]
         self.current_throttle = self.THROTTLE_MIN # Initial throttle value, starting safely with the minimum value.
-        # =======================================================================================================
 
+        # --- ROS Publishers and Subscribers ---
         self.pub_steering = rospy.Publisher('auto_steer_angle_lane', Float32, queue_size=1)
         self.pub_lane_status = rospy.Publisher('lane_detection_status', Bool, queue_size=1)
         self.image_sub = rospy.Subscriber('/usb_cam/image_raw', Image, self.image_callback, queue_size=1, buff_size=2**24)
         
-        # ======================= [KEY: Throttle Topic Subscriber] =======================
+        # --- Throttle Topic Subscriber ---
         self.throttle_sub = rospy.Subscriber('auto_throttle', Float32, self.throttle_callback, queue_size=1)
-        # ================================================================================
 
         rospy.loginfo("[Lane Follower] Node initialized and waiting for images...")
 
-    # ======================= [KEY: Throttle Callback Function] =======================
     def throttle_callback(self, msg):
         """ Callback function that receives the 'auto_throttle' topic and updates self.current_throttle. """
         self.current_throttle = np.clip(msg.data, self.THROTTLE_MIN, self.THROTTLE_MAX)
-    # ===================================================================================
 
     def do_bev_transform(self, image):
         M = cv2.getPerspectiveTransform(self.bev_params['src_points'], self.bev_params['dst_points'])
@@ -223,7 +220,7 @@ class LaneFollowerNode:
             if self.tracked_center_path['coeff'] is not None:
                 final_center_coeff = self.tracked_center_path['coeff']
 
-                # ======================= [KEY: Dynamic Lookahead Distance Calculation based on Normalization] =======================
+                # --- Dynamic Lookahead Distance Calculation based on Normalization ---
                 throttle_range = self.THROTTLE_MAX - self.THROTTLE_MIN
                 if throttle_range <= 0:
                     normalized_throttle = 0.0
@@ -231,7 +228,6 @@ class LaneFollowerNode:
                     normalized_throttle = (self.current_throttle - self.THROTTLE_MIN) / throttle_range
                 
                 dynamic_lookahead_distance = self.MIN_LOOKAHEAD_DISTANCE + (self.MAX_LOOKAHEAD_DISTANCE - self.MIN_LOOKAHEAD_DISTANCE) * normalized_throttle
-                # ==================================================================================================================
                 
                 goal_point_vehicle = None
                 for y_bev in range(self.bev_h - 1, -1, -1):
@@ -263,25 +259,20 @@ class LaneFollowerNode:
             cv2.circle(bev_im_for_drawing, goal_point_bev, 10, (0, 255, 255), -1) 
 
         steer_text = f"Steer: {steering_angle_deg:.1f} deg" if steering_angle_deg is not None else "Steer: N/A"
-        cv2.putText(bev_im_for_drawing, steer_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        cv2.putText(bev_im_for_drawing, f"Lane Detected: {lane_detected_bool}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        cv2.putText(bev_im_for_drawing, steer_text, (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+        cv2.putText(bev_im_for_drawing, f"Lane Detected: {lane_detected_bool}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
         
         throttle_range = self.THROTTLE_MAX - self.THROTTLE_MIN
         if throttle_range <= 0: normalized_throttle = 0.0
         else: normalized_throttle = (self.current_throttle - self.THROTTLE_MIN) / throttle_range
         viz_lookahead = self.MIN_LOOKAHEAD_DISTANCE + (self.MAX_LOOKAHEAD_DISTANCE - self.MIN_LOOKAHEAD_DISTANCE) * normalized_throttle
-        cv2.putText(bev_im_for_drawing, f"Lookahead: {viz_lookahead:.2f}m", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        cv2.putText(bev_im_for_drawing, f"Throttle: {self.current_throttle:.2f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
+        cv2.putText(bev_im_for_drawing, f"Lookahead: {viz_lookahead:.2f}m", (10, 90), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
+        cv2.putText(bev_im_for_drawing, f"Throttle: {self.current_throttle:.2f}", (10, 120), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 0), 2)
 
+        # Display result windows
         cv2.imshow("Original Camera View", im0s)
         cv2.imshow("Roboflow Detections (on BEV)", annotated_frame)
-        
-        # ======================= [ ✨ ADDED PART ✨ ] =======================
-        # Display the final filtered lane mask in a new window titled "Filtered Lane Mask (BEV)".
-        cv2.imshow("Filtered Lane Mask (BEV)", final_mask)
-        # =================================================================
-
-        cv2.imshow("Final Path (on BEV)", bev_im_for_drawing)
+        cv2.imshow("Final Path & Logs (on BEV)", bev_im_for_drawing)
         cv2.waitKey(1)
 
 def main():
