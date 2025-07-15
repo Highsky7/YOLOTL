@@ -120,7 +120,7 @@ The system follows a modular pipeline to process images and generate steering co
 
 1.  **Camera Input:** Receives a raw image stream from a camera (via ROS) or a video file.
 2.  **BEV Transformation:** Warps the input image into a top-down Bird's-Eye-View (BEV) perspective using pre-calibrated parameters.
-3.  **Lane Segmentation:** The BEV image is fed into the trained model(a YOLOv8-based architecture from Roboflow), which outputs a binary mask of the detected lane lines.
+3.  **Lane Segmentation:** The BEV image is fed into the trained model (a YOLOv8-based architecture from Roboflow), which outputs a binary mask of the detected lane lines.
 4.  **Lane Filtering & Tracking:** The output mask is cleaned using morphological operations. The system then identifies and tracks the left and right lane lines, smoothing the results over time for stability.
 5.  **Center Path Calculation:** A central path is computed based on the final positions of the left and right lanes.
 6.  **Pure Pursuit Control:** The Pure Pursuit algorithm calculates the optimal steering angle to guide the vehicle along the generated center path.
@@ -130,6 +130,11 @@ The system follows a modular pipeline to process images and generate steering co
 
 This project's model architecture is based on YOLOv8 by Ultralytics, and the model was trained and deployed using the Roboflow platform. If you use this project in your research, please consider citing both:
 
+### YOLOv8 by Ultralytics
+
+Jocher, G., Chaurasia, A., & Qiu, J. (2023). *YOLO by Ultralytics*. [GitHub Repository](https://github.com/ultralytics/ultralytics).
+
+```bibtex
 @misc{yolov8,
   author = {Jocher, Glenn and Chaurasia, Ayush and Qiu, Jing},
   title = {YOLO by Ultralytics},
@@ -138,7 +143,13 @@ This project's model architecture is based on YOLOv8 by Ultralytics, and the mod
   journal = {GitHub repository},
   howpublished = {\url{https://github.com/ultralytics/ultralytics}}
 }
+```
 
+### Roboflow Platform
+
+Roboflow, Inc. (2024). *Roboflow Platform*. [Website](https://roboflow.com).
+
+```bibtex
 @misc{roboflow,
   author = {Roboflow},
   title = {Roboflow Platform},
@@ -146,6 +157,7 @@ This project's model architecture is based on YOLOv8 by Ultralytics, and the mod
   publisher = {Roboflow, Inc.},
   howpublished = {\url{https://roboflow.com}}
 }
+```
 
 ## License
 
