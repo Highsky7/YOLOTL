@@ -8,12 +8,9 @@
 
 YOLOTL is a complete system for real-time lane detection and autonomous steering control. It leverages a YOLOv8 model for high-precision semantic segmentation on a Bird's-Eye-View (BEV) image, enabling robust lane-following capabilities for robotics and autonomous vehicle applications.
 
-<td align="center">
-    <video src="https://github.com/Highsky7/YOLOTL/blob/main/YOLOTL1.mp4" width="480" height="360" autoplay loop muted playsinline>
-</td>
-<td align="center">
-    <video src="https://github.com/Highsky7/YOLOTL/blob/main/YOLOTL2.mp4" width="480" height="360" autoplay loop muted playsinline>
-</td>
+| Live Demo 1 | Live Demo 2 |
+| :---: | :---: |
+| ![YOLOTL1](./YOLOTL1.gif) | ![YOLOTL2](./YOLOTL2.gif) |
 
 ## 📋 Table of Contents
 
@@ -107,7 +104,7 @@ The pre-trained model was trained using the Ultralytics YOLOv8 framework. You ca
     ```
     For more details, refer to the official [YOLOv8 documentation](https://docs.ultralytics.com/).
 
-## 📦 Model Zoo
+## Model Zoo
 
 The pre-trained model is available on Hugging Face:
 
@@ -115,7 +112,7 @@ The pre-trained model is available on Hugging Face:
 | :---: | :---: |
 | **YOLOTL Model** | [Hugging Face](https://huggingface.co/Highsky7/YOLOTL) |
 
-## 💾 Dataset
+## Dataset
 
 The dataset used for training is available on Hugging Face:
 
@@ -123,7 +120,7 @@ The dataset used for training is available on Hugging Face:
 | :---: | :---: |
 | **Topview_Lane Dataset** | [Hugging Face](https://huggingface.co/datasets/Highsky7/Topview_Lane) |
 
-## ✨ Features
+## Features
 
 -   **High-Precision Lane Segmentation:** Utilizes a YOLOv8 model fine-tuned for segmenting lane markings from a Bird's-Eye-View (BEV) perspective, ensuring high accuracy.
 -   **Robust Steering Control:** Implements the Pure Pursuit algorithm to calculate the precise steering angle required to follow the detected lane center.
@@ -132,7 +129,7 @@ The dataset used for training is available on Hugging Face:
 -   **Flexible Integration:** Offers both a seamless ROS integration for robotics projects and a standalone demo script that can run on any video file for quick testing and development.
 -   **Easy Calibration:** Includes helper scripts for generating the BEV transformation parameters from a source image, making it easy to adapt to different camera setups.
 
-## 🔧 How It Works
+## How It Works
 
 The system follows a modular pipeline to process images and generate steering commands:
 
@@ -144,10 +141,10 @@ The system follows a modular pipeline to process images and generate steering co
 6.  **Pure Pursuit Control:** The Pure Pursuit algorithm calculates the optimal steering angle to guide the vehicle along the generated center path.
 7.  **Output:** The final steering angle is published to a ROS topic or displayed in the demo window.
 
-## ©️ Citation
+## ©Citation
 
 This project uses the YOLOv8 model from Ultralytics. If you use this project in your research, please consider citing the original YOLOv8 paper.
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
