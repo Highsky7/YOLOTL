@@ -6,131 +6,148 @@
 [![OpenCV](https://img.shields.io/badge/OpenCV-%235C3EE8.svg?style=for-the-badge&logo=OpenCV&logoColor=white)](https://opencv.org/)
 [![ROS](https://img.shields.io/badge/ROS-%2322314E.svg?style=for-the-badge&logo=ROS&logoColor=white)](http://www.ros.org/)
 
-## 💬 Introduction
+YOLOTL is a complete system for real-time lane detection and autonomous steering control. It leverages a YOLOv8 model for high-precision semantic segmentation on a Bird's-Eye-View (BEV) image, enabling robust lane-following capabilities for robotics and autonomous vehicle applications.
 
-YOLOTL is a ROS-based project for real-time lane detection and steering angle calculation using a pre-trained YOLO model for top-view lane segmentation. It provides a robust solution for developing autonomous driving capabilities, with a focus on accuracy and performance.
+<td align="center">
+    <video src="https://github.com/Highsky7/YOLOTL/assets/103352131/e5125a73-5634-4284-8819-6358232a7695" width="480" height="360" autoplay loop muted playsinline>
+</td>
+<td align="center">
+    <video src="https://github.com/Highsky7/YOLOTL/assets/103352131/e5125a73-5634-4284-8819-6358232a7695" width="480" height="360" autoplay loop muted playsinline>
+</td>
 
-## 🚗 Results
+## 📋 Table of Contents
 
-| Result1 | Result2 |
-| :---: | :---: |
-| ![YOLOTL1](./YOLOTL1.gif) | ![YOLOTL2](./YOLOTL2.gif) |
-
-## ✨ Features
-
-- **Lane Detection:** Utilizes a YOLOv8 model to perform semantic segmentation on a Bird's-Eye View (BEV) transformed image, identifying lane markings with high precision.
-- **Steering Angle Calculation:** Implements a Pure Pursuit algorithm to calculate the required steering angle based on the detected lane center, enabling autonomous lane following.
-- **ROS Integration:** Seamlessly integrates with the Robot Operating System (ROS), subscribing to camera image topics and publishing steering commands.
-- **Standalone Demo:** Includes a demo script that can run independently of ROS, using a video file as input for quick testing and visualization.
-- **Dynamic Lookahead:** The Pure Pursuit algorithm features a dynamic lookahead distance that adjusts based on the vehicle's throttle, improving stability at varying speeds.
-- **BEV Transformation:** Includes scripts for both automatic and manual calibration of the BEV transformation, allowing for easy adaptation to different camera setups.
-
-## 📜 Table of Contents
-
+*   [Getting Started](#-getting-started)
+*   [Usage](#-usage)
+*   [Training](#-training)
 *   [Model Zoo](#-model-zoo)
 *   [Dataset](#-dataset)
-*   [Installation](#-installation)
-*   [Usage](#-usage)
-*   [Configuration](#-configuration)
+*   [Features](#-features)
+*   [How It Works](#-how-it-works)
 *   [Citation](#-citation)
 *   [License](#-license)
 
-## 🚀 Model Zoo
+## 🚀 Getting Started
 
-| Model | Download |
-| :---: | :---: |
-| YOLOTL | [Hugging Face](https://huggingface.co/Highsky7/YOLOTL) |
+### Prerequisites
 
-## 💾 Dataset
-
-| Dataset | Download |
-| :---: | :---: |
-| Topview_Lane | [Hugging Face](https://huggingface.co/datasets/Highsky7/Topview_Lane) |
-
-## 🔧 Getting Started
+-   Python 3.8+
+-   PyTorch
+-   OpenCV
+-   NumPy
+-   Ultralytics YOLOv8
+-   ROS (for the ROS-integrated version)
+    -   `rospy`, `cv_bridge`, `sensor_msgs`, `std_msgs`, etc.
 
 ### Installation
 
 1.  **Clone the repository:**
-
     ```bash
     git clone https://github.com/your-username/YOLOTL.git
+    cd YOLOTL
     ```
 
-2.  **Install Dependencies:**
-
-    *   Python 3.8+
-    *   PyTorch
-    *   OpenCV
-    *   NumPy
-    *   [Ultralytics YOLOv8](https://github.com/ultralytics/ultralytics)
-    *   ROS (for ROS integration)
-        *   `rospy`
-        *   `cv_bridge`
-        *   `sensor_msgs`
-        *   `std_msgs`
-        *   `nav_msgs`
-        *   `geometry_msgs`
-        *   `visualization_msgs`
-        *   `tf2_ros`
-        *   `tf2_geometry_msgs`
-
-    You can install the required Python packages using pip:
-
+2.  **Install Python dependencies:**
     ```bash
     pip install torch torchvision torchaudio
     pip install opencv-python numpy ultralytics
     ```
 
-3.  **Build the ROS package:**
-
+3.  **(For ROS users) Build the Catkin workspace:**
     ```bash
     cd /path/to/your/catkin_ws
     catkin_make
     source devel/setup.bash
     ```
 
-### How to run
+## Usage
 
-#### Live Demo with ROS
+You can run the project in two modes: with ROS for live integration or as a standalone script on a video file.
 
-To launch the ROS node for real-time lane following:
+### 1. Live Demo with ROS
 
-1.  **Start your camera node:**
+This mode is for controlling a real robot or vehicle equipped with a camera and ROS.
 
+1.  **Launch your camera node:**
     ```bash
+    # Example:
     roslaunch your_camera_package your_camera.launch
     ```
 
 2.  **Run the lane follower node:**
-
     ```bash
     rosrun camera_lane_segmentation demo_with_ros.py --weights /path/to/your/weights.pt --param-file /path/to/your/bev_params.npz
     ```
+    The node subscribes to `/usb_cam/image_raw` and publishes the steering angle to `/auto_steer_angle_lane`.
 
-The node will subscribe to the `/usb_cam/image_raw` topic and publish the steering angle to the `/auto_steer_angle_lane` topic.
+### 2. Standalone Demo on a Video File
 
-#### Running on a video
-
-To run the lane detection and steering angle calculation on a video file, use the `demo.py` script:
+This mode is for testing the algorithm on a pre-recorded video.
 
 ```bash
 python src/camera_lane_segmentation/scripts/demo.py --weights /path/to/your/weights.pt --source /path/to/your/video.mp4 --param-file /path/to/your/bev_params.npz
 ```
 
-- `--weights`: Path to the pre-trained YOLO model weights.
-- `--source`: Path to the input video file or camera index (e.g., `0` for webcam).
-- `--param-file`: Path to the BEV transformation parameters file.
+**Arguments:**
+-   `--weights`: Path to the pre-trained YOLO model weights (`.pt` file).
+-   `--source`: Path to the input video file or a camera index (e.g., `0` for webcam).
+-   `--param-file`: Path to the BEV transformation parameters (`.npz` file). You can generate your own using the calibration scripts in `src/camera_lane_segmentation/scripts/utils`.
 
-## ⚙️ Configuration
+## 🏋️ Training
 
-- **BEV Parameters:** The BEV transformation is defined by a `.npz` file containing the source and destination points. You can generate your own parameters using the provided calibration scripts in `src/camera_lane_segmentation/scripts/utils`.
-- **Model Weights:** The pre-trained YOLO model weights are required for lane segmentation. You can train your own model or use a pre-trained one.
+The pre-trained model was trained using the Ultralytics YOLOv8 framework. You can retrain the model or fine-tune it on your own data.
 
-## 📝 Citation
+1.  **Download the Dataset:** Get the `Topview_Lane` dataset from the [Model Zoo](#-model-zoo) section below.
+2.  **Prepare your dataset YAML:** Create a `.yaml` file that points to your training and validation data, like the one included in the dataset.
+3.  **Start Training:** Use the `ultralytics` CLI to train a new segmentation model.
 
-This project uses the YOLOv8 model from Ultralytics. If you use this project in your research, please cite the original YOLOv8 paper.
+    ```bash
+    # Example training command
+    yolo segment train data=Topview_Lane/data.yaml model=yolov8n-seg.pt epochs=100 imgsz=640
+    ```
+    For more details, refer to the official [YOLOv8 documentation](https://docs.ultralytics.com/).
+
+## 📦 Model Zoo
+
+The pre-trained model is available on Hugging Face:
+
+| Resource | Download Link |
+| :---: | :---: |
+| **YOLOTL Model** | [Hugging Face](https://huggingface.co/Highsky7/YOLOTL) |
+
+## 💾 Dataset
+
+The dataset used for training is available on Hugging Face:
+
+| Resource | Download Link |
+| :---: | :---: |
+| **Topview_Lane Dataset** | [Hugging Face](https://huggingface.co/datasets/Highsky7/Topview_Lane) |
+
+## ✨ Features
+
+-   **High-Precision Lane Segmentation:** Utilizes a YOLOv8 model fine-tuned for segmenting lane markings from a Bird's-Eye-View (BEV) perspective, ensuring high accuracy.
+-   **Robust Steering Control:** Implements the Pure Pursuit algorithm to calculate the precise steering angle required to follow the detected lane center.
+-   **Intelligent Lane Tracking:** Remembers the position of left and right lanes across frames. This provides stability through temporary occlusions (e.g., when one lane line disappears) and enables reliable differentiation between the two lanes.
+-   **Adaptive Control:** Features a dynamic lookahead distance in the Pure Pursuit controller. The lookahead distance automatically adjusts based on the vehicle's speed (throttle), improving stability and smoothness across different velocities.
+-   **Flexible Integration:** Offers both a seamless ROS integration for robotics projects and a standalone demo script that can run on any video file for quick testing and development.
+-   **Easy Calibration:** Includes helper scripts for generating the BEV transformation parameters from a source image, making it easy to adapt to different camera setups.
+
+## 🔧 How It Works
+
+The system follows a modular pipeline to process images and generate steering commands:
+
+1.  **Camera Input:** Receives a raw image stream from a camera (via ROS) or a video file.
+2.  **BEV Transformation:** Warps the input image into a top-down Bird's-Eye-View (BEV) perspective using pre-calibrated parameters.
+3.  **YOLOv8 Segmentation:** The BEV image is fed into the trained YOLOv8 model, which outputs a binary mask of the detected lane lines.
+4.  **Lane Filtering & Tracking:** The output mask is cleaned using morphological operations. The system then identifies and tracks the left and right lane lines, smoothing the results over time for stability.
+5.  **Center Path Calculation:** A central path is computed based on the final positions of the left and right lanes.
+6.  **Pure Pursuit Control:** The Pure Pursuit algorithm calculates the optimal steering angle to guide the vehicle along the generated center path.
+7.  **Output:** The final steering angle is published to a ROS topic or displayed in the demo window.
+
+## ©️ Citation
+
+This project uses the YOLOv8 model from Ultralytics. If you use this project in your research, please consider citing the original YOLOv8 paper.
 
 ## 📄 License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
