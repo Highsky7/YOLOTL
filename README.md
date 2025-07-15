@@ -10,7 +10,7 @@
 
 YOLOTL is a ROS-based project for real-time lane detection and steering angle calculation using a pre-trained YOLO model for top-view lane segmentation. It provides a robust solution for developing autonomous driving capabilities, with a focus on accuracy and performance.
 
-## 🚗 Result
+## 🚗 Results
 
 | Result1 | Result2 |
 | :---: | :---: |
@@ -47,7 +47,9 @@ YOLOTL is a ROS-based project for real-time lane detection and steering angle ca
 | :---: | :---: |
 | Topview_Lane | [Hugging Face](https://huggingface.co/datasets/Highsky7/Topview_Lane) |
 
-## 🔧 Installation
+## 🔧 Getting Started
+
+### Installation
 
 1.  **Clone the repository:**
 
@@ -88,21 +90,9 @@ YOLOTL is a ROS-based project for real-time lane detection and steering angle ca
     source devel/setup.bash
     ```
 
-## Usage
+### How to run
 
-### Standalone Demo (without ROS)
-
-To run the lane detection and steering angle calculation on a video file, use the `demo.py` script:
-
-```bash
-python src/camera_lane_segmentation/scripts/demo.py --weights /path/to/your/weights.pt --source /path/to/your/video.mp4 --param-file /path/to/your/bev_params.npz
-```
-
-- `--weights`: Path to the pre-trained YOLO model weights.
-- `--source`: Path to the input video file or camera index (e.g., `0` for webcam).
-- `--param-file`: Path to the BEV transformation parameters file.
-
-### ROS Node
+#### Live Demo with ROS
 
 To launch the ROS node for real-time lane following:
 
@@ -119,6 +109,18 @@ To launch the ROS node for real-time lane following:
     ```
 
 The node will subscribe to the `/usb_cam/image_raw` topic and publish the steering angle to the `/auto_steer_angle_lane` topic.
+
+#### Running on a video
+
+To run the lane detection and steering angle calculation on a video file, use the `demo.py` script:
+
+```bash
+python src/camera_lane_segmentation/scripts/demo.py --weights /path/to/your/weights.pt --source /path/to/your/video.mp4 --param-file /path/to/your/bev_params.npz
+```
+
+- `--weights`: Path to the pre-trained YOLO model weights.
+- `--source`: Path to the input video file or camera index (e.g., `0` for webcam).
+- `--param-file`: Path to the BEV transformation parameters file.
 
 ## ⚙️ Configuration
 
