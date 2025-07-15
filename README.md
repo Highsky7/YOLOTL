@@ -1,11 +1,28 @@
 # YOLOTL: YOLO-based Top-view Lane Segmentation and Steering Control
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python Version](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![PyTorch](https://img.shields.io/badge/PyTorch-%23EE4C2C.svg?style=for-the-badge&logo=PyTorch&logoColor=white)](https://pytorch.org/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-%235C3EE8.svg?style=for-the-badge&logo=OpenCV&logoColor=white)](https://opencv.org/)
+[![ROS](https://img.shields.io/badge/ROS-%2322314E.svg?style=for-the-badge&logo=ROS&logoColor=white)](http://www.ros.org/)
+
 YOLOTL is a ROS-based project for real-time lane detection and steering angle calculation using a pre-trained YOLO model for top-view lane segmentation. It provides a robust solution for developing autonomous driving capabilities, with a focus on accuracy and performance.
 
-![YOLOTL1](./YOLOTL1.gif)
-![YOLOTL2](./YOLOTL2.gif)
+| Original Video | Lane Segmentation |
+| :---: | :---: |
+| ![YOLOTL1](./YOLOTL1.gif) | ![YOLOTL2](./YOLOTL2.gif) |
 
-## Features
+## 📜 Table of Contents
+
+*   [Features](#-features)
+*   [Dependencies](#-dependencies)
+*   [Installation](#-installation)
+*   [Usage](#-usage)
+*   [Configuration](#-configuration)
+*   [Citation](#-citation)
+*   [License](#-license)
+
+## ✨ Features
 
 *   **Lane Detection:** Utilizes a YOLOv8 model to perform semantic segmentation on a Bird's-Eye View (BEV) transformed image, identifying lane markings with high precision.
 *   **Steering Angle Calculation:** Implements a Pure Pursuit algorithm to calculate the required steering angle based on the detected lane center, enabling autonomous lane following.
@@ -14,7 +31,7 @@ YOLOTL is a ROS-based project for real-time lane detection and steering angle ca
 *   **Dynamic Lookahead:** The Pure Pursuit algorithm features a dynamic lookahead distance that adjusts based on the vehicle's throttle, improving stability at varying speeds.
 *   **BEV Transformation:** Includes scripts for both automatic and manual calibration of the BEV transformation, allowing for easy adaptation to different camera setups.
 
-## Dependencies
+## 🔧 Dependencies
 
 *   Python 3.8+
 *   PyTorch
@@ -39,7 +56,7 @@ pip install torch torchvision torchaudio
 pip install opencv-python numpy ultralytics
 ```
 
-## Installation
+## 🚀 Installation
 
 1.  **Clone the repository:**
 
@@ -87,15 +104,15 @@ To launch the ROS node for real-time lane following:
 
 The node will subscribe to the `/usb_cam/image_raw` topic and publish the steering angle to the `/auto_steer_angle_lane` topic.
 
-## Configuration
+## ⚙️ Configuration
 
 *   **BEV Parameters:** The BEV transformation is defined by a `.npz` file containing the source and destination points. You can generate your own parameters using the provided calibration scripts in `src/camera_lane_segmentation/scripts/utils`.
 *   **Model Weights:** The pre-trained YOLO model weights are required for lane segmentation. You can train your own model or use a pre-trained one.
 
-## Citation
+## 📝 Citation
 
 This project uses the YOLOv8 model from Ultralytics. If you use this project in your research, please cite the original YOLOv8 paper.
 
-## License
+## 📄 License
 
-The license for this project is currently set to `TODO`. Please choose an appropriate open-source license for your project.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
