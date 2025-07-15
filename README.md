@@ -9,10 +9,10 @@
 YOLOTL is a complete system for real-time lane detection and autonomous steering control. It leverages a YOLOv8 model for high-precision semantic segmentation on a Bird's-Eye-View (BEV) image, enabling robust lane-following capabilities for robotics and autonomous vehicle applications.
 
 <td align="center">
-    <video src="https://github.com/Highsky7/YOLOTL/assets/103352131/e5125a73-5634-4284-8819-6358232a7695" width="480" height="360" autoplay loop muted playsinline>
+    <video src="https://github.com/Highsky7/YOLOTL/blob/main/YOLOTL1.mp4" width="480" height="360" autoplay loop muted playsinline>
 </td>
 <td align="center">
-    <video src="https://github.com/Highsky7/YOLOTL/assets/103352131/e5125a73-5634-4284-8819-6358232a7695" width="480" height="360" autoplay loop muted playsinline>
+    <video src="https://github.com/Highsky7/YOLOTL/blob/main/YOLOTL2.mp4" width="480" height="360" autoplay loop muted playsinline>
 </td>
 
 ## 📋 Table of Contents
