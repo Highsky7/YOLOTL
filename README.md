@@ -14,17 +14,15 @@ YOLOTL is a ROS-based project for real-time lane detection and steering angle ca
 
 ## 📜 Table of Contents
 
-- [YOLOTL: YOLO-based Top-view Lane Segmentation and Steering Control](#yolotl-yolo-based-top-view-lane-segmentation-and-steering-control)
-  - [📜 Table of Contents](#-table-of-contents)
-  - [✨ Features](#-features)
-  - [🔧 Dependencies](#-dependencies)
-  - [🚀 Installation](#-installation)
-  - [Usage](#usage)
-    - [Standalone Demo (without ROS)](#standalone-demo-without-ros)
-    - [ROS Node](#ros-node)
-  - [⚙️ Configuration](#️-configuration)
-  - [📝 Citation](#-citation)
-  - [📄 License](#-license)
+*   [Features](#-features)
+*   [Model Zoo](#-model-zoo)
+*   [Dataset](#-dataset)
+*   [Dependencies](#-dependencies)
+*   [Installation](#-installation)
+*   [Usage](#-usage)
+*   [Configuration](#-configuration)
+*   [Citation](#-citation)
+*   [License](#-license)
 
 ## ✨ Features
 
@@ -34,6 +32,18 @@ YOLOTL is a ROS-based project for real-time lane detection and steering angle ca
 *   **Standalone Demo:** Includes a demo script that can run independently of ROS, using a video file as input for quick testing and visualization.
 *   **Dynamic Lookahead:** The Pure Pursuit algorithm features a dynamic lookahead distance that adjusts based on the vehicle's throttle, improving stability at varying speeds.
 *   **BEV Transformation:** Includes scripts for both automatic and manual calibration of the BEV transformation, allowing for easy adaptation to different camera setups.
+
+## 🚀 Model Zoo
+
+| Model | Download |
+| :---: | :---: |
+| YOLOTL | [Hugging Face](https://huggingface.co/Highsky7/YOLOTL) |
+
+## 💾 Dataset
+
+| Dataset | Download |
+| :---: | :---: |
+| Topview_Lane | [Hugging Face](https://huggingface.co/datasets/Highsky7/Topview_Lane) |
 
 ## 🔧 Dependencies
 
