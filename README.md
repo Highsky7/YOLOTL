@@ -57,7 +57,7 @@ YOLOTL is a complete system for real-time lane detection and autonomous steering
     source devel/setup.bash
     ```
 
-## Usage
+## 📃 Usage
 
 You can run the project in two modes: with ROS for live integration or as a standalone script on a video file.
 
