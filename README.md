@@ -16,7 +16,6 @@ YOLOTL is a complete system for real-time lane detection and autonomous steering
 
 *   [Getting Started](#-getting-started)
 *   [Usage](#-usage)
-*   [Training](#-training)
 *   [Model Zoo](#-model-zoo)
 *   [Dataset](#-dataset)
 *   [Features](#-features)
@@ -89,20 +88,6 @@ python src/camera_lane_segmentation/scripts/demo.py --weights /path/to/your/weig
 -   `--weights`: Path to the pre-trained YOLO model weights (`.pt` file).
 -   `--source`: Path to the input video file or a camera index (e.g., `0` for webcam).
 -   `--param-file`: Path to the BEV transformation parameters (`.npz` file). You can generate your own using the calibration scripts in `src/camera_lane_segmentation/scripts/utils`.
-
-## 🏋️ Training
-
-The pre-trained model was trained using the Ultralytics YOLOv8 framework. You can retrain the model or fine-tune it on your own data.
-
-1.  **Download the Dataset:** Get the `Topview_Lane` dataset from the [Model Zoo](#-model-zoo) section below.
-2.  **Prepare your dataset YAML:** Create a `.yaml` file that points to your training and validation data, like the one included in the dataset.
-3.  **Start Training:** Use the `ultralytics` CLI to train a new segmentation model.
-
-    ```bash
-    # Example training command
-    yolo segment train data=Topview_Lane/data.yaml model=yolov8n-seg.pt epochs=100 imgsz=640
-    ```
-    For more details, refer to the official [YOLOv8 documentation](https://docs.ultralytics.com/).
 
 ## Model Zoo
 
