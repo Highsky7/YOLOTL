@@ -6,7 +6,7 @@
 [![OpenCV](https://img.shields.io/badge/OpenCV-%235C3EE8.svg?style=for-the-badge&logo=OpenCV&logoColor=white)](https://opencv.org/)
 [![ROS](https://img.shields.io/badge/ROS-%2322314E.svg?style=for-the-badge&logo=ROS&logoColor=white)](http://www.ros.org/)
 
-YOLOTL is a complete system for real-time lane detection and autonomous steering control. It leverages a YOLOv8 model for high-precision semantic segmentation on a Bird's-Eye-View (BEV) image, enabling robust lane-following capabilities for robotics and autonomous vehicle applications.
+YOLOTL is a complete system for real-time lane detection and autonomous steering control. It leverages a YOLOv8-based segmentation model, trained and optimized using the Roboflow 3.0 architecture, for high-precision semantic segmentation on a Bird's-Eye-View (BEV) image, enabling robust lane-following capabilities for robotics and autonomous vehicle applications.
 
 | Live Demo 1 | Live Demo 2 |
 | :---: | :---: |
@@ -31,7 +31,7 @@ YOLOTL is a complete system for real-time lane detection and autonomous steering
 -   PyTorch
 -   OpenCV
 -   NumPy
--   Ultralytics YOLOv8
+-   Ultralytics YOLOv8 (for running inference with the Roboflow-trained model)
 -   ROS (for the ROS-integrated version)
     -   `rospy`, `cv_bridge`, `sensor_msgs`, `std_msgs`, etc.
 
@@ -107,7 +107,7 @@ The dataset used for training is available on Hugging Face:
 
 ## Features
 
--   **High-Precision Lane Segmentation:** Utilizes a YOLOv8 model fine-tuned for segmenting lane markings from a Bird's-Eye-View (BEV) perspective, ensuring high accuracy.
+-   **High-Precision Lane Segmentation:** Utilizes a YOLOv8-based model trained on Roboflow for segmenting lane markings from a Bird's-Eye-View (BEV) perspective, ensuring high accuracy.
 -   **Robust Steering Control:** Implements the Pure Pursuit algorithm to calculate the precise steering angle required to follow the detected lane center.
 -   **Intelligent Lane Tracking:** Remembers the position of left and right lanes across frames. This provides stability through temporary occlusions (e.g., when one lane line disappears) and enables reliable differentiation between the two lanes.
 -   **Adaptive Control:** Features a dynamic lookahead distance in the Pure Pursuit controller. The lookahead distance automatically adjusts based on the vehicle's speed (throttle), improving stability and smoothness across different velocities.
@@ -120,7 +120,7 @@ The system follows a modular pipeline to process images and generate steering co
 
 1.  **Camera Input:** Receives a raw image stream from a camera (via ROS) or a video file.
 2.  **BEV Transformation:** Warps the input image into a top-down Bird's-Eye-View (BEV) perspective using pre-calibrated parameters.
-3.  **YOLOv8 Segmentation:** The BEV image is fed into the trained YOLOv8 model, which outputs a binary mask of the detected lane lines.
+3.  **Lane Segmentation:** The BEV image is fed into the trained model(a YOLOv8-based architecture from Roboflow), which outputs a binary mask of the detected lane lines.
 4.  **Lane Filtering & Tracking:** The output mask is cleaned using morphological operations. The system then identifies and tracks the left and right lane lines, smoothing the results over time for stability.
 5.  **Center Path Calculation:** A central path is computed based on the final positions of the left and right lanes.
 6.  **Pure Pursuit Control:** The Pure Pursuit algorithm calculates the optimal steering angle to guide the vehicle along the generated center path.
@@ -128,7 +128,24 @@ The system follows a modular pipeline to process images and generate steering co
 
 ## ©Citation
 
-This project uses the YOLOv8 model from Ultralytics. If you use this project in your research, please consider citing the original YOLOv8 paper.
+This project's model architecture is based on YOLOv8 by Ultralytics, and the model was trained and deployed using the Roboflow platform. If you use this project in your research, please consider citing both:
+
+@misc{yolov8,
+  author = {Jocher, Glenn and Chaurasia, Ayush and Qiu, Jing},
+  title = {YOLO by Ultralytics},
+  year = {2023},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/ultralytics/ultralytics}}
+}
+
+@misc{roboflow,
+  author = {Roboflow},
+  title = {Roboflow Platform},
+  year = {2024},
+  publisher = {Roboflow, Inc.},
+  howpublished = {\url{https://roboflow.com}}
+}
 
 ## License
 
