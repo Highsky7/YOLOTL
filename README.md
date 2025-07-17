@@ -10,7 +10,7 @@ YOLOTL is a complete system for real-time lane detection and autonomous steering
 
 | Live Demo 1 | Live Demo 2 |
 | :---: | :---: |
-| <img src="./YOLOTL1.gif" alt="YOLOTL1" height="600" width="300"> | <img src="./YOLOTL2.gif" alt="YOLOTL2" height="600" width="300"> |
+| <img src="./YOLOTL1.gif" alt="YOLOTL1" height="300" width="250"> | <img src="./YOLOTL2.gif" alt="YOLOTL2" height="300" width="250"> |
 
 ## 📋 Table of Contents
 
